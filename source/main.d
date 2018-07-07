@@ -8,6 +8,7 @@ import std.string : format, fromStringz;
 
 import shaders;
 import buffer;
+import sprite;
 
 version(Windows) string libName = "dlls\\glfw3.dll";
 else string libName = "glfw3.so";
@@ -47,10 +48,10 @@ void main()
   // Reload after making context to use GL 3 core features
   DerelictGL3.reload();
   
-  glViewport(0,0,640,480);
-  glClearColor(0.39215686275, 0.58431372549, 0.92941176471, 1.0);
+  //glViewport(0,0,640,480);
+  //glClearColor(0.39215686275, 0.58431372549, 0.92941176471, 1.0);
 
-  uint clear_color = rgbToUint32(0, 128, 0);
+  uint clear_color = rgbToUint(0, 128, 0);
   
   auto buffer_width = 640;
   auto buffer_height = 480;
@@ -61,9 +62,17 @@ void main()
   buffer.data = new uint[buffer.width * buffer.height];
   bufferClear(&buffer, clear_color);
 
+  GLuint buffer_texture;
+  glGenTextures(1, &buffer_texture);
+  glBindTexture(GL_TEXTURE_2D, buffer_texture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, buffer.width, buffer.height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, cast(char *)buffer.data);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
   GLuint fullscreen_triangle_vao;
   glGenVertexArrays(1, &fullscreen_triangle_vao);
-  glBindVertexArray(fullscreen_triangle_vao);
 
   auto shaderID = createShaders();
   if(!validateProgram(shaderID))
@@ -83,26 +92,22 @@ void main()
   glActiveTexture(GL_TEXTURE0);
   glBindVertexArray(fullscreen_triangle_vao);
 
-  GLuint buffer_texture;
-  glGenTextures(1, &buffer_texture);
-
-  glBindTexture(GL_TEXTURE_2D, buffer_texture);
-  glTexImage2D(
-      GL_TEXTURE_2D, 0, GL_RGB8,
-      buffer.width, buffer.height, 0,
-      GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, cast(char *)buffer.data
-  );
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+  auto alien_sprite = createAlien();
 
   while (!glfwWindowShouldClose(window))
   {
-    glClear(GL_COLOR_BUFFER_BIT);
+    //glClear(GL_COLOR_BUFFER_BIT);
+    bufferClear(&buffer, clear_color);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    bufferDraw(&buffer, alien_sprite, 112, 128, rgbToUint(128, 0, 0));
+
+    glTexSubImage2D(
+      GL_TEXTURE_2D, 0, 0, 0,
+      buffer.width, buffer.height,
+      GL_RGBA, GL_UNSIGNED_INT_8_8_8_8,
+      cast(char *)buffer.data
+    );
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     glfwSwapBuffers(window);
     glfwPollEvents();

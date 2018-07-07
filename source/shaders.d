@@ -81,5 +81,5 @@ void attachShader(in GLuint shaderID, in GLenum shaderType, in string shaderSour
   
   validateShader(shader, shaderSource);
   glAttachShader(shaderID, shader);
-  //glDeleteShader(shader_vp);
+  glDeleteShader(shader);
 }
