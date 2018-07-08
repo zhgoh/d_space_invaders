@@ -17,6 +17,15 @@ else string libName = "glfw3.so";
 static const auto buffer_width = 224;
 static const auto buffer_height = 256;
 
+// Game running state
+static auto isRunning = true;
+
+// Player state
+static auto playerDir = 0;
+
+// Whether fired
+static auto firePressed = false;
+
 void main()
 {
   // Using Derelict to load openGL/GLFW
@@ -40,10 +49,13 @@ void main()
   auto window = glfwCreateWindow(640, 480, "Space Invaders", null, null);
   if(window is null)
   {
-      fatal("glfw failed to create window");
-      glfwTerminate();
-      return;
+    fatal("glfw failed to create window");
+    glfwTerminate();
+    return;
   }
+
+  // Setting key callbacks
+  glfwSetKeyCallback(window, &key_callback);
 
   glfwShowWindow(window);
   glfwMakeContextCurrent(window);
@@ -93,51 +105,71 @@ void main()
   glBindVertexArray(fullscreen_triangle_vao);
 
   auto alienAnim = createAlienAnimation();
-  auto playerSprite = createPlayerSprite();
+  const auto playerSprite = createPlayerSprite();
+  const auto bulletSprite = createBulletSprite();
   auto game = createGame(buffer_width, buffer_height);
 
   // Set Alien position
-  for(size_t yi = 0; yi < 5; ++yi)
+  for (size_t yi = 0; yi < 5; ++yi)
   {
-    for(size_t xi = 0; xi < 11; ++xi)
+    for (size_t xi = 0; xi < 11; ++xi)
     {
       game.aliens[yi * 11 + xi].x = 16 * xi + 20;
       game.aliens[yi * 11 + xi].y = 17 * yi + 128;
     }
   }
 
-
-  // Player state
-  auto playerDir = 1;
-
   // Main loop
-  while (!glfwWindowShouldClose(window))
+  while (!glfwWindowShouldClose(window) && isRunning)
   {
     loopAnim(alienAnim);
 
-    if(game.player.x + playerSprite.width + playerDir >= game.width - 1)
+    const auto newDir = playerDir * 2;
+
+    if (newDir != 0)
     {
-      game.player.x = game.width - playerSprite.width - playerDir - 1;
-      playerDir *= -1;
+      if (game.player.x + playerSprite.width + newDir >= game.width)
+      {
+        game.player.x = game.width - playerSprite.width;
+      }
+      else if (cast (int)game.player.x + newDir <= 0)
+      {
+        game.player.x = 0;
+      }
+      else 
+        game.player.x += newDir;
     }
-    else if(cast (int)game.player.x + playerDir <= 0)
-    {
-      game.player.x = 0;
-      playerDir *= -1;
-    }
-    else 
-      game.player.x += playerDir;
 
     //glClear(GL_COLOR_BUFFER_BIT);
     bufferClear(&buffer, clear_color);
 
     for (size_t ai = 0; ai < game.num_aliens; ++ai)
     {
-        const auto alien = &game.aliens[ai];
+      const auto alien = &game.aliens[ai];
 
-        size_t current_frame = alienAnim.time / alienAnim.frame_duration;
-        const auto sprite = alienAnim.frames[current_frame];
-        bufferDraw(&buffer, sprite, alien.x, alien.y, rgbToUint(128, 0, 0));
+      size_t current_frame = alienAnim.time / alienAnim.frame_duration;
+      const auto sprite = alienAnim.frames[current_frame];
+      bufferDraw(&buffer, sprite, alien.x, alien.y, rgbToUint(128, 0, 0));
+    }
+
+    for (size_t bi = 0; bi < game.num_bullets; ++bi)
+    {
+      const auto bullet = &game.bullets[bi];
+      bufferDraw(&buffer, bulletSprite, bullet.x, bullet.y, rgbToUint(128, 0, 0));
+    }
+
+    for(size_t bi = 0; bi < game.num_bullets;)
+    {
+      game.bullets[bi].y += game.bullets[bi].dir;
+      if(game.bullets[bi].y >= game.height ||
+        game.bullets[bi].y < bulletSprite.height)
+      {
+          game.bullets[bi] = game.bullets[game.num_bullets - 1];
+          --game.num_bullets;
+          continue;
+      }
+      
+      ++bi;
     }
 
     bufferDraw(&buffer, playerSprite, game.player.x, game.player.y, rgbToUint(128, 0, 0));
@@ -152,6 +184,15 @@ void main()
 
     glfwSwapBuffers(window);
     glfwPollEvents();
+
+    if (firePressed && game.num_bullets < 128)
+    {
+      game.bullets[game.num_bullets].x = game.player.x + playerSprite.width / 2;
+      game.bullets[game.num_bullets].y = game.player.y + playerSprite.height;
+      game.bullets[game.num_bullets].dir = 2;
+      ++game.num_bullets;
+    }
+    firePressed = false;
   }
 
   glDeleteVertexArrays(1, &fullscreen_triangle_vao);
@@ -166,4 +207,39 @@ extern(C) nothrow
 	{
 		throw new Error(format("Error: %s : %s", error, fromStringz(description)));
   }
+
+  void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+  {
+    switch(key)
+    {
+    case GLFW_KEY_ESCAPE:
+      if(action == GLFW_PRESS) 
+        isRunning = false;
+      break;
+
+    case GLFW_KEY_D:
+    case GLFW_KEY_RIGHT:
+      if(action == GLFW_PRESS) 
+        playerDir += 1;
+      else if(action == GLFW_RELEASE) 
+        playerDir -= 1;
+      break;
+
+    case GLFW_KEY_A:
+    case GLFW_KEY_LEFT:
+      if(action == GLFW_PRESS) 
+        playerDir -= 1;
+      else if(action == GLFW_RELEASE) 
+        playerDir += 1;
+      break;
+    
+    case GLFW_KEY_SPACE:
+      if (action == GLFW_RELEASE) 
+        firePressed = true;
+      break;
+
+    default:
+      break;
+    }
+  } 
 }

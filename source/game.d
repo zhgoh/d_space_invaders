@@ -14,8 +14,10 @@ struct Game
 {
   size_t width, height;
   size_t num_aliens;
+  size_t num_bullets;
   Alien[] aliens;
   Player player;
+  Bullet[128] bullets;
 }
 
 Game createGame(size_t buffer_width, size_t buffer_height)
@@ -33,3 +35,9 @@ Game createGame(size_t buffer_width, size_t buffer_height)
   
   return game;
 }
+
+struct Bullet
+{
+    size_t x, y;
+    int dir;
+};
