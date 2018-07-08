@@ -47,13 +47,12 @@ void main()
 
   glfwShowWindow(window);
   glfwMakeContextCurrent(window);
+
+  // Turning on vsync
   glfwSwapInterval(1);
 
   // Reload after making context to use GL 3 core features
   DerelictGL3.reload();
-  
-  //glViewport(0,0,640,480);
-  //glClearColor(0.39215686275, 0.58431372549, 0.92941176471, 1.0);
 
   uint clear_color = rgbToUint(0, 128, 0);
 
@@ -93,7 +92,7 @@ void main()
   glActiveTexture(GL_TEXTURE0);
   glBindVertexArray(fullscreen_triangle_vao);
 
-  auto alienSprite = createAlienSprite();
+  auto alienAnim = createAlienAnimation();
   auto playerSprite = createPlayerSprite();
   auto game = createGame(buffer_width, buffer_height);
 
@@ -107,15 +106,38 @@ void main()
     }
   }
 
+
+  // Player state
+  auto playerDir = 1;
+
+  // Main loop
   while (!glfwWindowShouldClose(window))
   {
+    loopAnim(alienAnim);
+
+    if(game.player.x + playerSprite.width + playerDir >= game.width - 1)
+    {
+      game.player.x = game.width - playerSprite.width - playerDir - 1;
+      playerDir *= -1;
+    }
+    else if(cast (int)game.player.x + playerDir <= 0)
+    {
+      game.player.x = 0;
+      playerDir *= -1;
+    }
+    else 
+      game.player.x += playerDir;
+
     //glClear(GL_COLOR_BUFFER_BIT);
     bufferClear(&buffer, clear_color);
 
-    for(size_t ai = 0; ai < game.num_aliens; ++ai)
+    for (size_t ai = 0; ai < game.num_aliens; ++ai)
     {
-      auto alien = &game.aliens[ai];
-      bufferDraw(&buffer, alienSprite, alien.x, alien.y, rgbToUint(128, 0, 0));
+        const auto alien = &game.aliens[ai];
+
+        size_t current_frame = alienAnim.time / alienAnim.frame_duration;
+        const auto sprite = alienAnim.frames[current_frame];
+        bufferDraw(&buffer, sprite, alien.x, alien.y, rgbToUint(128, 0, 0));
     }
 
     bufferDraw(&buffer, playerSprite, game.player.x, game.player.y, rgbToUint(128, 0, 0));
