@@ -9,9 +9,13 @@ import std.string : format, fromStringz;
 import shaders;
 import buffer;
 import sprite;
+import game;
 
 version(Windows) string libName = "dlls\\glfw3.dll";
 else string libName = "glfw3.so";
+
+static const auto buffer_width = 224;
+static const auto buffer_height = 256;
 
 void main()
 {
@@ -52,9 +56,6 @@ void main()
   //glClearColor(0.39215686275, 0.58431372549, 0.92941176471, 1.0);
 
   uint clear_color = rgbToUint(0, 128, 0);
-  
-  auto buffer_width = 640;
-  auto buffer_height = 480;
 
   Buffer buffer;
   buffer.width = buffer_width;
@@ -92,14 +93,32 @@ void main()
   glActiveTexture(GL_TEXTURE0);
   glBindVertexArray(fullscreen_triangle_vao);
 
-  auto alien_sprite = createAlien();
+  auto alienSprite = createAlienSprite();
+  auto playerSprite = createPlayerSprite();
+  auto game = createGame(buffer_width, buffer_height);
+
+  // Set Alien position
+  for(size_t yi = 0; yi < 5; ++yi)
+  {
+    for(size_t xi = 0; xi < 11; ++xi)
+    {
+      game.aliens[yi * 11 + xi].x = 16 * xi + 20;
+      game.aliens[yi * 11 + xi].y = 17 * yi + 128;
+    }
+  }
 
   while (!glfwWindowShouldClose(window))
   {
     //glClear(GL_COLOR_BUFFER_BIT);
     bufferClear(&buffer, clear_color);
 
-    bufferDraw(&buffer, alien_sprite, 112, 128, rgbToUint(128, 0, 0));
+    for(size_t ai = 0; ai < game.num_aliens; ++ai)
+    {
+      auto alien = &game.aliens[ai];
+      bufferDraw(&buffer, alienSprite, alien.x, alien.y, rgbToUint(128, 0, 0));
+    }
+
+    bufferDraw(&buffer, playerSprite, game.player.x, game.player.y, rgbToUint(128, 0, 0));
 
     glTexSubImage2D(
       GL_TEXTURE_2D, 0, 0, 0,
