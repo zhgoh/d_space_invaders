@@ -101,6 +101,7 @@ Sprite[7] createAlienSprite()
     0,0,1,1,0,0,0,0,1,1,0,0  // ..@@....@@..
   ];
 
+  // Death sprite
   alien[6].width = 13;
   alien[6].height = 7;
   alien[6].data =
@@ -183,4 +184,17 @@ Sprite createBulletSprite()
     1  // @
   ];
   return bullet;
+}
+
+bool overlapCheck(
+  const ref Sprite sp_a, size_t x_a, size_t y_a,
+  const ref Sprite sp_b, size_t x_b, size_t y_b
+)
+{
+  if(x_a < x_b + sp_b.width && x_a + sp_a.width > x_b &&
+     y_a < y_b + sp_b.height && y_a + sp_a.height > y_b)
+  {
+    return true;
+  }
+  return false;
 }

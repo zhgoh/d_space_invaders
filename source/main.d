@@ -114,9 +114,18 @@ void main()
   {
     for (size_t xi = 0; xi < 11; ++xi)
     {
-      game.aliens[yi * 11 + xi].x = 16 * xi + 20;
-      game.aliens[yi * 11 + xi].y = 17 * yi + 128;
+      auto alien = &game.aliens[yi * 11 + xi];
+      alien.type = cast(ubyte) (5 - yi) / 2 + 1;
+
+      alien.x = 16 * xi + 20;
+      alien.y = 17 * yi + 128;
     }
+  }
+
+  auto death_counters = new ubyte[game.num_aliens];
+  for (size_t i = 0; i < game.num_aliens; ++i)
+  {
+    death_counters[i] = 10;
   }
 
   // Main loop
@@ -145,11 +154,22 @@ void main()
 
     for (size_t ai = 0; ai < game.num_aliens; ++ai)
     {
+      if(!death_counters[ai]) 
+        continue;
+      
       const auto alien = &game.aliens[ai];
 
-      size_t current_frame = alienAnim.time / alienAnim.frame_duration;
-      const auto sprite = alienAnim.frames[current_frame];
-      bufferDraw(&buffer, sprite, alien.x, alien.y, rgbToUint(128, 0, 0));
+      if (alien.type == AlienType.ALIEN_DEAD)
+      {
+        // Draw death sprite
+        bufferDraw(&buffer, alienAnim.frames[6], alien.x, alien.y, rgbToUint(128, 0, 0));
+      }
+      else
+      {
+        size_t current_frame = alienAnim.time / alienAnim.frame_duration;
+        const auto sprite = alienAnim.frames[current_frame];
+        bufferDraw(&buffer, sprite, alien.x, alien.y, rgbToUint(128, 0, 0));
+      }
     }
 
     for (size_t bi = 0; bi < game.num_bullets; ++bi)
@@ -158,6 +178,7 @@ void main()
       bufferDraw(&buffer, bulletSprite, bullet.x, bullet.y, rgbToUint(128, 0, 0));
     }
 
+    // Simulate bullets
     for (size_t bi = 0; bi < game.num_bullets;)
     {
       game.bullets[bi].y += game.bullets[bi].dir;
@@ -167,6 +188,32 @@ void main()
           game.bullets[bi] = game.bullets[game.num_bullets - 1];
           --game.num_bullets;
           continue;
+      }
+
+      // Check hit
+      for (size_t ai = 0; ai < game.num_aliens; ++ai)
+      {
+        const auto alien = &game.aliens[ai];
+        if (alien.type == AlienType.ALIEN_DEAD) 
+          continue;
+
+        const auto animation = &alienAnim;
+        size_t current_frame = animation.time / animation.frame_duration;
+        const auto alien_sprite = &animation.frames[current_frame];
+        bool overlap = overlapCheck(
+          bulletSprite, game.bullets[bi].x, game.bullets[bi].y,
+          *alien_sprite, alien.x, alien.y
+        );
+        
+        if (overlap)
+        {
+          game.aliens[ai].type = AlienType.ALIEN_DEAD;
+          // NOTE: Hack to recenter death sprite
+          game.aliens[ai].x -= (alienAnim.frames[6].width - alien_sprite.width)/2;
+          game.bullets[bi] = game.bullets[game.num_bullets - 1];
+          --game.num_bullets;
+          continue;
+        }
       }
       
       ++bi;
@@ -185,6 +232,17 @@ void main()
     glfwSwapBuffers(window);
     glfwPollEvents();
 
+    // Simulate aliens
+    for (size_t ai = 0; ai < game.num_aliens; ++ai)
+    {
+      const auto alien = &game.aliens[ai];
+      if (alien.type == AlienType.ALIEN_DEAD && death_counters[ai])
+      {
+        --death_counters[ai];
+      }
+    }
+
+    // SImulate bullets
     if (firePressed && game.num_bullets < 128)
     {
       game.bullets[game.num_bullets].x = game.player.x + playerSprite.width / 2;
