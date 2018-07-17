@@ -158,10 +158,10 @@ void main()
       bufferDraw(&buffer, bulletSprite, bullet.x, bullet.y, rgbToUint(128, 0, 0));
     }
 
-    for(size_t bi = 0; bi < game.num_bullets;)
+    for (size_t bi = 0; bi < game.num_bullets;)
     {
       game.bullets[bi].y += game.bullets[bi].dir;
-      if(game.bullets[bi].y >= game.height ||
+      if (game.bullets[bi].y >= game.height ||
         game.bullets[bi].y < bulletSprite.height)
       {
           game.bullets[bi] = game.bullets[game.num_bullets - 1];
