@@ -107,6 +107,8 @@ void main()
   auto alienAnim = createAlienAnimation();
   const auto playerSprite = createPlayerSprite();
   const auto bulletSprite = createBulletSprite();
+  const auto textSprite = createTextSprite();
+  const auto numberSprite = createNumberSprite();
   auto game = createGame(buffer_width, buffer_height);
 
   // Set Alien position
@@ -127,6 +129,8 @@ void main()
   {
     death_counters[i] = 10;
   }
+
+  size_t score = 0;
 
   // Main loop
   while (!glfwWindowShouldClose(window) && isRunning)
@@ -151,6 +155,15 @@ void main()
 
     //glClear(GL_COLOR_BUFFER_BIT);
     bufferClear(&buffer, clear_color);
+
+    // Drawing of UI/Text
+    bufferDrawText(&buffer, textSprite, "SCORE", 4, game.height - textSprite.height - 7, rgbToUint(128, 0, 0));
+    bufferDrawNumber(&buffer, numberSprite, score, 4 + 2 * numberSprite.width, game.height - 2 * numberSprite.height - 12, rgbToUint(128, 0, 0));
+    bufferDrawText(&buffer, textSprite, "CREDIT 00", 164, 7, rgbToUint(128, 0, 0));
+    for (size_t i = 0; i < game.width; ++i)
+    {
+      buffer.data[game.width * 16 + i] = rgbToUint(128, 0, 0);
+    }
 
     for (size_t ai = 0; ai < game.num_aliens; ++ai)
     {
@@ -208,6 +221,9 @@ void main()
         if (overlap)
         {
           game.aliens[ai].type = AlienType.ALIEN_DEAD;
+
+          score += 10 * (4 - game.aliens[ai].type);
+
           // NOTE: Hack to recenter death sprite
           game.aliens[ai].x -= (alienAnim.frames[6].width - alien_sprite.width)/2;
           game.bullets[bi] = game.bullets[game.num_bullets - 1];
