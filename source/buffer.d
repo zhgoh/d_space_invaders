@@ -1,10 +1,18 @@
 import sprite;
 import std.algorithm;
 
-struct Buffer
+class Buffer
 {
   size_t width, height;
   uint[] data;
+
+  this(size_t width, size_t height)
+  {
+    this.width = width;
+    this.height = height;
+
+    this.data = new uint[width * height];
+  }
 }
 
 uint rgbToUint(ubyte r, ubyte g, ubyte b)

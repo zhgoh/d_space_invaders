@@ -5,6 +5,7 @@ import std.experimental.logger;
 import std.stdio;
 import std.typecons;
 import std.string : format, fromStringz;
+import std.exception;
 
 import shaders;
 import buffer;
@@ -31,36 +32,33 @@ struct Player
   size_t life;
 }
 
-struct GameState
+class GameState
 {
   size_t width, height;
-  size_t num_aliens;
-  size_t num_bullets;
+  size_t numAliens;
+  size_t numBullets;
   Alien[] aliens;
   Player player;
   Bullet[128] bullets;
-}
 
-GameState createGame(size_t buffer_width, size_t buffer_height)
-{
-  GameState game;
-  game.width = buffer_width;
-  game.height = buffer_height;
-  game.num_aliens = 55;
-  game.aliens = new Alien[game.num_aliens];
+  this(size_t width, size_t height, size_t x, size_t y, size_t numAliens = 55, size_t numLives = 3)
+  {
+    this.width = width;
+    this.height = height;
 
-  game.player.x = 112 - 5;
-  game.player.y = 32;
+    this.numAliens = numAliens;
+    this.aliens = new Alien[numAliens];
 
-  game.player.life = 3;
-  
-  return game;
+    this.player.x = x;
+    this.player.y = y;
+    this.player.life = numLives;
+  }
 }
 
 struct Bullet
 {
-    size_t x, y;
-    int dir;
+  size_t x, y;
+  int dir;
 };
 
 class Game
@@ -68,6 +66,8 @@ class Game
   private static bool isRunning;
   private uint width, height;
   private GLFWwindow *window;
+  private GameState gameState;
+  private Buffer buffer;
 
   this(uint width, uint height)
   {
@@ -75,9 +75,13 @@ class Game
     this.height = height;
 
     isRunning = true;
+    gameState = new GameState(width, height, 112 - 5, 32);
+    buffer = new Buffer(width, height);
+
+    InitGL();
   }
 
-  bool InitGL()
+  void InitGL()
   {
     // Using Derelict to load openGL/GLFW
     DerelictGL3.load();
@@ -89,7 +93,7 @@ class Game
     if (!glfwInit())
     {
       fatal("glfw failed to init");
-      return false;
+      throw new Exception("glfw failed to init");
     }
 
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -102,7 +106,7 @@ class Game
     {
       fatal("glfw failed to create window");
       glfwTerminate();
-      return false;
+      throw new Exception("glfw failed to create window");
     }
 
     // Setting key callbacks
@@ -117,22 +121,16 @@ class Game
     // Reload after making context to use GL 3 core features
     DerelictGL3.reload();
 
-    return true;
+    
   }
 
   public void Run()
   {
-    if (!InitGL())
-    return;
-    
+    // Clear for first frame
     auto clearColor = rgbToUint(0, 128, 0);
-
-    Buffer buffer;
-    buffer.width = width;
-    buffer.height = height;
-    buffer.data = new uint[buffer.width * buffer.height];
     bufferClear(&buffer, clearColor);
 
+    // Create textures for the buffer
     GLuint buffer_texture;
     glGenTextures(1, &buffer_texture);
     glBindTexture(GL_TEXTURE_2D, buffer_texture);
@@ -145,8 +143,8 @@ class Game
     GLuint fullscreen_triangle_vao;
     glGenVertexArrays(1, &fullscreen_triangle_vao);
 
-    auto shaderID = createShaders();
-    if(!validateProgram(shaderID))
+    const auto shaderID = createShaders();
+    if (!validateProgram(shaderID))
     {
       fatal("Error while validating shader.");
       glfwTerminate();
@@ -168,7 +166,6 @@ class Game
     const auto bulletSprite = createBulletSprite();
     const auto textSprite = createTextSprite();
     const auto numberSprite = createNumberSprite();
-    auto gameState = createGame(width, height);
 
     // Set Alien position
     for (size_t yi = 0; yi < 5; ++yi)
@@ -183,8 +180,8 @@ class Game
       }
     }
 
-    auto death_counters = new ubyte[gameState.num_aliens];
-    for (size_t i = 0; i < gameState.num_aliens; ++i)
+    auto death_counters = new ubyte[gameState.numAliens];
+    for (size_t i = 0; i < gameState.numAliens; ++i)
     {
       death_counters[i] = 10;
     }
@@ -224,9 +221,9 @@ class Game
         buffer.data[gameState.width * 16 + i] = rgbToUint(128, 0, 0);
       }
 
-      for (size_t ai = 0; ai < gameState.num_aliens; ++ai)
+      for (size_t ai = 0; ai < gameState.numAliens; ++ai)
       {
-        if(!death_counters[ai]) 
+        if (!death_counters[ai]) 
           continue;
         
         const auto alien = &gameState.aliens[ai];
@@ -244,26 +241,26 @@ class Game
         }
       }
 
-      for (size_t bi = 0; bi < gameState.num_bullets; ++bi)
+      for (size_t bi = 0; bi < gameState.numBullets; ++bi)
       {
         const auto bullet = &gameState.bullets[bi];
         bufferDraw(&buffer, bulletSprite, bullet.x, bullet.y, rgbToUint(128, 0, 0));
       }
 
       // Simulate bullets
-      for (size_t bi = 0; bi < gameState.num_bullets;)
+      for (size_t bi = 0; bi < gameState.numBullets;)
       {
         gameState.bullets[bi].y += gameState.bullets[bi].dir;
         if (gameState.bullets[bi].y >= gameState.height ||
           gameState.bullets[bi].y < bulletSprite.height)
         {
-            gameState.bullets[bi] = gameState.bullets[gameState.num_bullets - 1];
-            --gameState.num_bullets;
+            gameState.bullets[bi] = gameState.bullets[gameState.numBullets - 1];
+            --gameState.numBullets;
             continue;
         }
 
         // Check hit
-        for (size_t ai = 0; ai < gameState.num_aliens; ++ai)
+        for (size_t ai = 0; ai < gameState.numAliens; ++ai)
         {
           const auto alien = &gameState.aliens[ai];
           if (alien.type == AlienType.ALIEN_DEAD) 
@@ -285,8 +282,8 @@ class Game
 
             // NOTE: Hack to recenter death sprite
             gameState.aliens[ai].x -= (alienAnim.frames[6].width - alien_sprite.width)/2;
-            gameState.bullets[bi] = gameState.bullets[gameState.num_bullets - 1];
-            --gameState.num_bullets;
+            gameState.bullets[bi] = gameState.bullets[gameState.numBullets - 1];
+            --gameState.numBullets;
             continue;
           }
         }
@@ -308,7 +305,7 @@ class Game
       glfwPollEvents();
 
       // Simulate aliens
-      for (size_t ai = 0; ai < gameState.num_aliens; ++ai)
+      for (size_t ai = 0; ai < gameState.numAliens; ++ai)
       {
         const auto alien = &gameState.aliens[ai];
         if (alien.type == AlienType.ALIEN_DEAD && death_counters[ai])
@@ -318,12 +315,12 @@ class Game
       }
 
       // SImulate bullets
-      if (firePressed && gameState.num_bullets < 128)
+      if (firePressed && gameState.numBullets < 128)
       {
-        gameState.bullets[gameState.num_bullets].x = gameState.player.x + playerSprite.width / 2;
-        gameState.bullets[gameState.num_bullets].y = gameState.player.y + playerSprite.height;
-        gameState.bullets[gameState.num_bullets].dir = 2;
-        ++gameState.num_bullets;
+        gameState.bullets[gameState.numBullets].x = gameState.player.x + playerSprite.width / 2;
+        gameState.bullets[gameState.numBullets].y = gameState.player.y + playerSprite.height;
+        gameState.bullets[gameState.numBullets].dir = 2;
+        ++gameState.numBullets;
       }
       firePressed = false;
     }
@@ -332,6 +329,10 @@ class Game
     
     glfwDestroyWindow(window);
     glfwTerminate();
+  }
+
+  private void Frame()
+  {
   }
 
   public static void Stop() nothrow
