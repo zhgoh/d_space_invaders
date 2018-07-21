@@ -4,3 +4,12 @@ Simple space invaders game written in D, adapted from http://nicktasios.nl/posts
 Note: I am adapting the code to how I see fit. It might not be fully the same as the blog post. 
 
 P.S. I will try to clean up the code in the near future.
+
+
+## Screenshot
+
+![alt text](https://raw.githubusercontent.com/zgoh/d_space_invaders/master/screenshots/Space_Invaders.png)
+
+## Credits
+This game would not have happened without this blog posts.
+http://nicktasios.nl/posts/space-invaders-from-scratch-part-1.html
