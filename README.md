@@ -5,9 +5,7 @@ Note: I am adapting the code to how I see fit. It might not be fully the same as
 
 P.S. I will try to clean up the code in the near future.
 
-
 ## Screenshot
-
 ![alt text](https://raw.githubusercontent.com/zgoh/d_space_invaders/master/screenshots/Space_Invaders.png)
 
 ## Credits
