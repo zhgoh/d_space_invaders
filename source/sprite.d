@@ -4,6 +4,15 @@ struct Sprite
   ubyte[] data;
 };
 
+struct SpriteAnimation
+{
+  bool loop;
+  size_t num_frames;
+  size_t frame_duration;
+  size_t time;
+  Sprite[7] frames;
+}
+
 enum AlienType : ubyte
 {
     ALIEN_DEAD   = 0,
@@ -136,42 +145,6 @@ Sprite createPlayerSprite()
   return player;
 }
 
-struct SpriteAnimation
-{
-    bool loop;
-    size_t num_frames;
-    size_t frame_duration;
-    size_t time;
-    Sprite[7] frames;
-}
-
-SpriteAnimation createAlienAnimation()
-{
-  SpriteAnimation alienAnim;
-
-  alienAnim.loop = true;
-  alienAnim.num_frames = 2;
-  alienAnim.frame_duration = 10;
-  alienAnim.time = 0;
-
-  alienAnim.frames = createAlienSprite();
-  return alienAnim;
-}
-
-void loopAnim(ref SpriteAnimation anim)
-{
-  ++anim.time;
-  if(anim.time == anim.num_frames * anim.frame_duration)
-  {
-      if(anim.loop) 
-        anim.time = 0;
-      else
-      {
-        //TODO: Remove anim
-      }
-  }
-}
-
 Sprite createBulletSprite()
 {
   Sprite bullet;
@@ -184,19 +157,6 @@ Sprite createBulletSprite()
     1  // @
   ];
   return bullet;
-}
-
-bool overlapCheck(
-  const ref Sprite sp_a, size_t x_a, size_t y_a,
-  const ref Sprite sp_b, size_t x_b, size_t y_b
-)
-{
-  if(x_a < x_b + sp_b.width && x_a + sp_a.width > x_b &&
-     y_a < y_b + sp_b.height && y_a + sp_a.height > y_b)
-  {
-    return true;
-  }
-  return false;
 }
 
 Sprite createTextSprite()
@@ -285,4 +245,44 @@ Sprite createNumberSprite()
   const size_t offset = 16 * 35;
   number_spritesheet.data = number_spritesheet.data[offset..number_spritesheet.data.length];
   return number_spritesheet;
+}
+
+SpriteAnimation createAlienAnimation()
+{
+  SpriteAnimation alienAnim;
+
+  alienAnim.loop = true;
+  alienAnim.num_frames = 2;
+  alienAnim.frame_duration = 10;
+  alienAnim.time = 0;
+
+  alienAnim.frames = createAlienSprite();
+  return alienAnim;
+}
+
+bool overlapCheck(
+  const ref Sprite sp_a, size_t x_a, size_t y_a,
+  const ref Sprite sp_b, size_t x_b, size_t y_b
+)
+{
+  if(x_a < x_b + sp_b.width && x_a + sp_a.width > x_b &&
+     y_a < y_b + sp_b.height && y_a + sp_a.height > y_b)
+  {
+    return true;
+  }
+  return false;
+}
+
+void loopAnim(ref SpriteAnimation anim)
+{
+  ++anim.time;
+  if(anim.time == anim.num_frames * anim.frame_duration)
+  {
+      if(anim.loop) 
+        anim.time = 0;
+      else
+      {
+        //TODO: Remove anim
+      }
+  }
 }
