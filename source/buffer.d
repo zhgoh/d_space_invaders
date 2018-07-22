@@ -92,11 +92,11 @@ void bufferDrawNumber(
   uint color)
 {
   ubyte[64] digits;
-  size_t num_digits = 0;
+  size_t numDigits = 0;
 
   do
   {
-    digits[num_digits++] = number % 10;
+    digits[numDigits++] = number % 10;
     number /= 10;
   }
   while (number > 0);
@@ -107,9 +107,9 @@ void bufferDrawNumber(
   sprite.height = numberSprite.height;
   sprite.data = new ubyte[numberSprite.data.length];
 
-  for (size_t i = 0; i < num_digits; ++i)
+  for (size_t i = 0; i < numDigits; ++i)
   {
-    ubyte digit = digits[num_digits - i - 1];
+    ubyte digit = digits[numDigits - i - 1];
     const auto start = digit * stride;
     numberSprite.data[start..numberSprite.data.length].copy(sprite.data);
 
