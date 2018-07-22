@@ -32,6 +32,12 @@ struct Player
   size_t life;
 }
 
+struct Bullet
+{
+  size_t x, y;
+  int dir;
+}
+
 class GameState
 {
   size_t width, height;
@@ -41,12 +47,13 @@ class GameState
   Player player;
   Bullet[128] bullets;
 
-  this(size_t width, size_t height, size_t x, size_t y, size_t numAliens = 55, size_t numLives = 3)
+  this(size_t width, size_t height, size_t x, size_t y, size_t numLives = 3)
   {
     this.width = width;
     this.height = height;
 
-    this.numAliens = numAliens;
+    // Hardcoded because setting alien pos needs it
+    this.numAliens = 55;
     this.aliens = new Alien[numAliens];
 
     this.player.x = x;
@@ -55,30 +62,52 @@ class GameState
   }
 }
 
-struct Bullet
-{
-  size_t x, y;
-  int dir;
-};
-
 class Game
 {
-  private static bool isRunning;
+  private static bool isRunning = true;
   private uint width, height;
   private GLFWwindow *window;
   private GameState gameState;
   private Buffer buffer;
+  private GLuint fullscreenTriangleVAO;
+
+  private AlienAnimation alienAnim;
+  private const Sprite playerSprite;
+  private const Sprite bulletSprite;
+  private const Sprite textSprite;
+  private const Sprite numberSprite;
+
+  private size_t score = 0;
 
   this(uint width, uint height)
   {
     this.width = width;
     this.height = height;
-
-    isRunning = true;
+    
     gameState = new GameState(width, height, 112 - 5, 32);
     buffer = new Buffer(width, height);
 
-    InitGL();
+    // Creates animation
+    alienAnim = createAlienAnimation();
+    playerSprite = createPlayerSprite();
+    bulletSprite = createBulletSprite();
+    textSprite = createTextSprite();
+    numberSprite = createNumberSprite();
+
+    // Set Alien position
+    for (size_t yi = 0; yi < 5; ++yi)
+    {
+      for (size_t xi = 0; xi < 11; ++xi)
+      {
+        auto alien = &gameState.aliens[yi * 11 + xi];
+        alien.type = cast (ubyte) (5 - yi) / 2 + 1;
+
+        const auto sprite = &alienAnim.frames[2 * (alien.type - 1)];
+
+        alien.x = 16 * xi + 20 + (alienAnim.frames[AlienFrame.ALIEN_DEATH].width - sprite.width) / 2;
+        alien.y = 17 * yi + 128;
+      }
+    }
   }
 
   void InitGL()
@@ -121,15 +150,6 @@ class Game
     // Reload after making context to use GL 3 core features
     DerelictGL3.reload();
 
-    
-  }
-
-  public void Run()
-  {
-    // Clear for first frame
-    auto clearColor = rgbToUint(0, 128, 0);
-    bufferClear(&buffer, clearColor);
-
     // Create textures for the buffer
     GLuint buffer_texture;
     glGenTextures(1, &buffer_texture);
@@ -140,17 +160,18 @@ class Game
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    GLuint fullscreen_triangle_vao;
-    glGenVertexArrays(1, &fullscreen_triangle_vao);
+    // Create a triangular mesh for drawing background
+    glGenVertexArrays(1, &fullscreenTriangleVAO);
 
+    // Create a default shader
     const auto shaderID = createShaders();
     if (!validateProgram(shaderID))
     {
       fatal("Error while validating shader.");
       glfwTerminate();
-      glDeleteVertexArrays(1, &fullscreen_triangle_vao);
+      glDeleteVertexArrays(1, &fullscreenTriangleVAO);
 
-      return;
+      throw new Exception("Error while validating shader.");
     }
 
     glUseProgram(shaderID);
@@ -159,34 +180,29 @@ class Game
 
     glDisable(GL_DEPTH_TEST);
     glActiveTexture(GL_TEXTURE0);
-    glBindVertexArray(fullscreen_triangle_vao);
+    glBindVertexArray(fullscreenTriangleVAO);
+  }
 
-    auto alienAnim = createAlienAnimation();
-    const auto playerSprite = createPlayerSprite();
-    const auto bulletSprite = createBulletSprite();
-    const auto textSprite = createTextSprite();
-    const auto numberSprite = createNumberSprite();
+  private void CleanupGL()
+  {
+    glDeleteVertexArrays(1, &fullscreenTriangleVAO);
+    glfwDestroyWindow(window);
+    glfwTerminate();
+  }
 
-    // Set Alien position
-    for (size_t yi = 0; yi < 5; ++yi)
-    {
-      for (size_t xi = 0; xi < 11; ++xi)
-      {
-        auto alien = &gameState.aliens[yi * 11 + xi];
-        alien.type = cast(ubyte) (5 - yi) / 2 + 1;
+  public void Run()
+  {
+    InitGL();
 
-        alien.x = 16 * xi + 20;
-        alien.y = 17 * yi + 128;
-      }
-    }
+    // Clear for first frame
+    auto clearColor = rgbToUint(0, 128, 0);
+    bufferClear(&buffer, clearColor);
 
-    auto death_counters = new ubyte[gameState.numAliens];
+    auto deathCounters = new ubyte[gameState.numAliens];
     for (size_t i = 0; i < gameState.numAliens; ++i)
     {
-      death_counters[i] = 10;
+      deathCounters[i] = 10;
     }
-
-    size_t score = 0;
 
     // Main loop
     while (!glfwWindowShouldClose(window) && isRunning)
@@ -209,7 +225,6 @@ class Game
           gameState.player.x += newDir;
       }
 
-      //glClear(GL_COLOR_BUFFER_BIT);
       bufferClear(&buffer, clearColor);
 
       // Drawing of UI/Text
@@ -223,7 +238,7 @@ class Game
 
       for (size_t ai = 0; ai < gameState.numAliens; ++ai)
       {
-        if (!death_counters[ai]) 
+        if (!deathCounters[ai]) 
           continue;
         
         const auto alien = &gameState.aliens[ai];
@@ -235,8 +250,8 @@ class Game
         }
         else
         {
-          size_t current_frame = alienAnim.time / alienAnim.frame_duration;
-          const auto sprite = alienAnim.frames[current_frame];
+          size_t currentFrame = alienAnim.time / alienAnim.frame_duration;
+          const auto sprite = alienAnim.frames[2 * (alien.type - 1) + currentFrame];
           bufferDraw(&buffer, sprite, alien.x, alien.y, rgbToUint(128, 0, 0));
         }
       }
@@ -308,9 +323,9 @@ class Game
       for (size_t ai = 0; ai < gameState.numAliens; ++ai)
       {
         const auto alien = &gameState.aliens[ai];
-        if (alien.type == AlienType.ALIEN_DEAD && death_counters[ai])
+        if (alien.type == AlienType.ALIEN_DEAD && deathCounters[ai])
         {
-          --death_counters[ai];
+          --deathCounters[ai];
         }
       }
 
@@ -325,10 +340,7 @@ class Game
       firePressed = false;
     }
 
-    glDeleteVertexArrays(1, &fullscreen_triangle_vao);
-    
-    glfwDestroyWindow(window);
-    glfwTerminate();
+    CleanupGL();
   }
 
   private void Frame()

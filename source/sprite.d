@@ -4,30 +4,46 @@ struct Sprite
   ubyte[] data;
 };
 
-struct SpriteAnimation
+struct AlienAnimation
 {
   bool loop;
   size_t num_frames;
   size_t frame_duration;
   size_t time;
-  Sprite[7] frames;
+  Sprite[AlienFrame.NUM_FRAMES] frames;
 }
 
 enum AlienType : ubyte
 {
-    ALIEN_DEAD   = 0,
-    ALIEN_TYPE_A = 1,
-    ALIEN_TYPE_B = 2,
-    ALIEN_TYPE_C = 3
+  ALIEN_DEAD   = 0,
+  ALIEN_TYPE_A = 1,
+  ALIEN_TYPE_B = 2,
+  ALIEN_TYPE_C = 3
 };
 
-Sprite[7] createAlienSprite()
+enum AlienFrame
 {
-  Sprite[7] alien;
+  ALIEN_TYPE_A_0 = 0,
+  ALIEN_TYPE_A_1 = 1,
 
-  alien[0].width = 8;
-  alien[0].height = 8;
-  alien[0].data =
+  ALIEN_TYPE_B_0 = 2,
+  ALIEN_TYPE_B_1 = 3,
+  
+  ALIEN_TYPE_C_0 = 4,
+  ALIEN_TYPE_C_1 = 5,
+
+  ALIEN_DEATH = 6,
+  NUM_FRAMES = 7
+}
+
+Sprite[AlienFrame.NUM_FRAMES] createAlienSprite()
+{
+  Sprite[AlienFrame.NUM_FRAMES] alien;
+
+  // Type A
+  alien[AlienFrame.ALIEN_TYPE_A_0].width = 8;
+  alien[AlienFrame.ALIEN_TYPE_A_0].height = 8;
+  alien[AlienFrame.ALIEN_TYPE_A_0].data =
   [
     0,0,0,1,1,0,0,0, // ...@@...
     0,0,1,1,1,1,0,0, // ..@@@@..
@@ -39,9 +55,9 @@ Sprite[7] createAlienSprite()
     0,1,0,0,0,0,1,0  // .@....@.
   ];
 
-  alien[1].width = 8;
-  alien[1].height = 8;
-  alien[1].data =
+  alien[AlienFrame.ALIEN_TYPE_A_1].width = 8;
+  alien[AlienFrame.ALIEN_TYPE_A_1].height = 8;
+  alien[AlienFrame.ALIEN_TYPE_A_1].data =
   [
     0,0,0,1,1,0,0,0, // ...@@...
     0,0,1,1,1,1,0,0, // ..@@@@..
@@ -53,9 +69,10 @@ Sprite[7] createAlienSprite()
     1,0,1,0,0,1,0,1  // @.@..@.@
   ];
 
-  alien[2].width = 11;
-  alien[2].height = 8;
-  alien[2].data = 
+  // Type B
+  alien[AlienFrame.ALIEN_TYPE_B_0].width = 11;
+  alien[AlienFrame.ALIEN_TYPE_B_0].height = 8;
+  alien[AlienFrame.ALIEN_TYPE_B_0].data = 
   [
     0,0,1,0,0,0,0,0,1,0,0, // ..@.....@..
     0,0,0,1,0,0,0,1,0,0,0, // ...@...@...
@@ -67,9 +84,9 @@ Sprite[7] createAlienSprite()
     0,0,0,1,1,0,1,1,0,0,0  // ...@@.@@...
   ];
 
-  alien[3].width = 11;
-  alien[3].height = 8;
-  alien[3].data = 
+  alien[AlienFrame.ALIEN_TYPE_B_1].width = 11;
+  alien[AlienFrame.ALIEN_TYPE_B_1].height = 8;
+  alien[AlienFrame.ALIEN_TYPE_B_1].data = 
   [
     0,0,1,0,0,0,0,0,1,0,0, // ..@.....@..
     1,0,0,1,0,0,0,1,0,0,1, // @..@...@..@
@@ -81,9 +98,10 @@ Sprite[7] createAlienSprite()
     0,1,0,0,0,0,0,0,0,1,0  // .@.......@.
   ];
 
-  alien[4].width = 12;
-  alien[4].height = 8;
-  alien[4].data =
+  // Type C
+  alien[AlienFrame.ALIEN_TYPE_C_0].width = 12;
+  alien[AlienFrame.ALIEN_TYPE_C_0].height = 8;
+  alien[AlienFrame.ALIEN_TYPE_C_0].data =
   [
     0,0,0,0,1,1,1,1,0,0,0,0, // ....@@@@....
     0,1,1,1,1,1,1,1,1,1,1,0, // .@@@@@@@@@@.
@@ -96,9 +114,9 @@ Sprite[7] createAlienSprite()
   ];
 
 
-  alien[5].width = 12;
-  alien[5].height = 8;
-  alien[5].data =
+  alien[AlienFrame.ALIEN_TYPE_C_1].width = 12;
+  alien[AlienFrame.ALIEN_TYPE_C_1].height = 8;
+  alien[AlienFrame.ALIEN_TYPE_C_1].data =
   [
     0,0,0,0,1,1,1,1,0,0,0,0, // ....@@@@....
     0,1,1,1,1,1,1,1,1,1,1,0, // .@@@@@@@@@@.
@@ -111,9 +129,9 @@ Sprite[7] createAlienSprite()
   ];
 
   // Death sprite
-  alien[6].width = 13;
-  alien[6].height = 7;
-  alien[6].data =
+  alien[AlienFrame.ALIEN_DEATH].width = 13;
+  alien[AlienFrame.ALIEN_DEATH].height = 7;
+  alien[AlienFrame.ALIEN_DEATH].data =
   [
     0,1,0,0,1,0,0,0,1,0,0,1,0, // .@..@...@..@.
     0,0,1,0,0,1,0,1,0,0,1,0,0, // ..@..@.@..@..
@@ -247,9 +265,9 @@ Sprite createNumberSprite()
   return number_spritesheet;
 }
 
-SpriteAnimation createAlienAnimation()
+AlienAnimation createAlienAnimation()
 {
-  SpriteAnimation alienAnim;
+  AlienAnimation alienAnim;
 
   alienAnim.loop = true;
   alienAnim.num_frames = 2;
@@ -273,7 +291,7 @@ bool overlapCheck(
   return false;
 }
 
-void loopAnim(ref SpriteAnimation anim)
+void loopAnim(ref AlienAnimation anim)
 {
   ++anim.time;
   if(anim.time == anim.num_frames * anim.frame_duration)
