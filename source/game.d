@@ -40,12 +40,13 @@ struct Bullet
 
 class GameState
 {
-  size_t width, height;
-  size_t numAliens;
-  size_t numBullets;
-  Alien[] aliens;
-  Player player;
-  Bullet[128] bullets;
+  public size_t width, height;
+  public size_t numAliens;
+  public size_t numBullets;
+  public Alien[] aliens;
+  public Player player;
+  public Bullet[128] bullets;
+  public ubyte[] deathCounters;
 
   this(size_t width, size_t height, size_t x, size_t y, size_t numLives = 3)
   {
@@ -59,6 +60,9 @@ class GameState
     this.player.x = x;
     this.player.y = y;
     this.player.life = numLives;
+
+    this.deathCounters = new ubyte[numAliens];
+    deathCounters[] = 10;
   }
 }
 
@@ -193,16 +197,15 @@ class Game
   public void Run()
   {
     InitGL();
+    Frame();
+    CleanupGL();
+  }
 
+  private void Frame()
+  {
     // Clear for first frame
     auto clearColor = rgbToUint(0, 128, 0);
     bufferClear(&buffer, clearColor);
-
-    auto deathCounters = new ubyte[gameState.numAliens];
-    for (size_t i = 0; i < gameState.numAliens; ++i)
-    {
-      deathCounters[i] = 10;
-    }
 
     // Main loop
     while (!glfwWindowShouldClose(window) && isRunning)
@@ -238,7 +241,7 @@ class Game
 
       for (size_t ai = 0; ai < gameState.numAliens; ++ai)
       {
-        if (!deathCounters[ai]) 
+        if (!gameState.deathCounters[ai]) 
           continue;
         
         const auto alien = &gameState.aliens[ai];
@@ -250,7 +253,7 @@ class Game
         }
         else
         {
-          size_t currentFrame = alienAnim.time / alienAnim.frame_duration;
+          size_t currentFrame = alienAnim.time / alienAnim.frameDuration;
           const auto sprite = alienAnim.frames[2 * (alien.type - 1) + currentFrame];
           bufferDraw(&buffer, sprite, alien.x, alien.y, rgbToUint(128, 0, 0));
         }
@@ -282,7 +285,7 @@ class Game
             continue;
 
           const auto animation = &alienAnim;
-          size_t current_frame = animation.time / animation.frame_duration;
+          size_t current_frame = animation.time / animation.frameDuration;
           const auto alien_sprite = &animation.frames[current_frame];
           bool overlap = overlapCheck(
             bulletSprite, gameState.bullets[bi].x, gameState.bullets[bi].y,
@@ -323,9 +326,9 @@ class Game
       for (size_t ai = 0; ai < gameState.numAliens; ++ai)
       {
         const auto alien = &gameState.aliens[ai];
-        if (alien.type == AlienType.ALIEN_DEAD && deathCounters[ai])
+        if (alien.type == AlienType.ALIEN_DEAD && gameState.deathCounters[ai])
         {
-          --deathCounters[ai];
+          --gameState.deathCounters[ai];
         }
       }
 
@@ -339,12 +342,6 @@ class Game
       }
       firePressed = false;
     }
-
-    CleanupGL();
-  }
-
-  private void Frame()
-  {
   }
 
   public static void Stop() nothrow

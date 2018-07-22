@@ -7,8 +7,8 @@ struct Sprite
 struct AlienAnimation
 {
   bool loop;
-  size_t num_frames;
-  size_t frame_duration;
+  size_t numFrames;
+  size_t frameDuration;
   size_t time;
   Sprite[AlienFrame.NUM_FRAMES] frames;
 }
@@ -270,8 +270,8 @@ AlienAnimation createAlienAnimation()
   AlienAnimation alienAnim;
 
   alienAnim.loop = true;
-  alienAnim.num_frames = 2;
-  alienAnim.frame_duration = 10;
+  alienAnim.numFrames = 2;
+  alienAnim.frameDuration = 10;
   alienAnim.time = 0;
 
   alienAnim.frames = createAlienSprite();
@@ -283,20 +283,18 @@ bool overlapCheck(
   const ref Sprite sp_b, size_t x_b, size_t y_b
 )
 {
-  if(x_a < x_b + sp_b.width && x_a + sp_a.width > x_b &&
-     y_a < y_b + sp_b.height && y_a + sp_a.height > y_b)
-  {
+  if (x_a < x_b + sp_b.width && x_a + sp_a.width > x_b &&
+      y_a < y_b + sp_b.height && y_a + sp_a.height > y_b)
     return true;
-  }
   return false;
 }
 
 void loopAnim(ref AlienAnimation anim)
 {
   ++anim.time;
-  if(anim.time == anim.num_frames * anim.frame_duration)
+  if (anim.time == anim.numFrames * anim.frameDuration)
   {
-      if(anim.loop) 
+      if (anim.loop) 
         anim.time = 0;
       else
       {
