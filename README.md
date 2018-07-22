@@ -7,6 +7,11 @@ Note: I am adapting the code to how I see fit. It might not be fully the same as
 
 P.S. I will try to clean up the code in the near future.
 
+## Building
+
+The dub project is given, just run dub on the command line and it will build. 
+Note: Only tested to work on Windows atm. 
+
 ## Purpose
 
 I wanted to learn how to write a simple OpenGL game in D and I happened to see this blog post and I decided to follow it.
