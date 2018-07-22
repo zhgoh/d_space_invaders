@@ -44,7 +44,7 @@ void bufferDraw(
       size_t sy = sprite.height - 1 + y - yi;
       size_t sx = x + xi;
 
-      if(sprite.data[yi * sprite.width + xi] && 
+      if (sprite.data[yi * sprite.width + xi] && 
          sy < buffer.height && sx < buffer.width) 
       {
         buffer.data[sy * buffer.width + sx] = color;

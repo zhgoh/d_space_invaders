@@ -135,7 +135,7 @@ class Game
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     
     window = glfwCreateWindow(2 * width, 2 * height, "Space Invaders", null, null);
-    if(window is null)
+    if (window is null)
     {
       fatal("glfw failed to create window");
       glfwTerminate();
@@ -362,23 +362,23 @@ extern(C) nothrow
     switch(key)
     {
     case GLFW_KEY_ESCAPE:
-      if(action == GLFW_PRESS) 
+      if (action == GLFW_PRESS) 
         Game.Stop();
       break;
 
     case GLFW_KEY_D:
     case GLFW_KEY_RIGHT:
-      if(action == GLFW_PRESS) 
+      if (action == GLFW_PRESS) 
         playerDir += 1;
-      else if(action == GLFW_RELEASE) 
+      else if (action == GLFW_RELEASE) 
         playerDir -= 1;
       break;
 
     case GLFW_KEY_A:
     case GLFW_KEY_LEFT:
-      if(action == GLFW_PRESS) 
+      if (action == GLFW_PRESS) 
         playerDir -= 1;
-      else if(action == GLFW_RELEASE) 
+      else if (action == GLFW_RELEASE) 
         playerDir += 1;
       break;
     
