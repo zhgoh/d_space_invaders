@@ -179,10 +179,10 @@ Sprite createBulletSprite()
 
 Sprite createTextSprite()
 {
-  Sprite text_spritesheet;
-  text_spritesheet.width = 5;
-  text_spritesheet.height = 7;
-  text_spritesheet.data =
+  Sprite spritesheet;
+  spritesheet.width = 5;
+  spritesheet.height = 7;
+  spritesheet.data =
   [
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
     0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,
@@ -254,15 +254,15 @@ Sprite createTextSprite()
     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,
     0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
   ];
-  return text_spritesheet;
+  return spritesheet;
 }
 
 Sprite createNumberSprite()
 {
-  Sprite number_spritesheet = createTextSprite();
+  Sprite spritesheet = createTextSprite();
   const size_t offset = 16 * 35;
-  number_spritesheet.data = number_spritesheet.data[offset..number_spritesheet.data.length];
-  return number_spritesheet;
+  spritesheet.data = spritesheet.data[offset..spritesheet.data.length];
+  return spritesheet;
 }
 
 AlienAnimation createAlienAnimation()
@@ -279,12 +279,11 @@ AlienAnimation createAlienAnimation()
 }
 
 bool overlapCheck(
-  const ref Sprite sp_a, size_t x_a, size_t y_a,
-  const ref Sprite sp_b, size_t x_b, size_t y_b
-)
+  const ref Sprite spriteA, size_t xA, size_t yA,
+  const ref Sprite spriteB, size_t xB, size_t yB)
 {
-  if (x_a < x_b + sp_b.width && x_a + sp_a.width > x_b &&
-      y_a < y_b + sp_b.height && y_a + sp_a.height > y_b)
+  if (xA < xB + spriteB.width && xA + spriteA.width > xB &&
+      yA < yB + spriteB.height && yA + spriteA.height > yB)
     return true;
   return false;
 }

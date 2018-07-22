@@ -3,7 +3,7 @@ import std.stdio;
 import std.experimental.logger;
 import derelict.opengl;
 
-const string vertex_shader =
+const string vertexShader =
   "\n"
   ~"#version 330\n"
   ~"\n"
@@ -17,7 +17,7 @@ const string vertex_shader =
   ~"    gl_Position = vec4(2.0 * TexCoord - 1.0, 0.0, 1.0);\n"
   ~"}\n";
 
-const string fragment_shader =
+const string fragmentShader =
   "\n"
   ~"#version 330\n"
   ~"\n"
@@ -64,8 +64,8 @@ bool validateProgram(GLuint program)
 int createShaders()
 {
   GLuint shaderID = glCreateProgram();
-  attachShader(shaderID, GL_VERTEX_SHADER, vertex_shader);
-  attachShader(shaderID, GL_FRAGMENT_SHADER, fragment_shader);
+  attachShader(shaderID, GL_VERTEX_SHADER, vertexShader);
+  attachShader(shaderID, GL_FRAGMENT_SHADER, fragmentShader);
   
   glLinkProgram(shaderID);
   return shaderID;

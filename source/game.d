@@ -121,7 +121,7 @@ class Game
     DerelictGLFW3.load("dlls\\glfw3.dll");
 
     // Setting error callbacks
-    glfwSetErrorCallback(&error_callback);
+    glfwSetErrorCallback(&ErrorCallback);
 
     if (!glfwInit())
     {
@@ -143,7 +143,7 @@ class Game
     }
 
     // Setting key callbacks
-    glfwSetKeyCallback(window, &key_callback);
+    glfwSetKeyCallback(window, &KeyCallback);
 
     glfwShowWindow(window);
     glfwMakeContextCurrent(window);
@@ -155,9 +155,9 @@ class Game
     DerelictGL3.reload();
 
     // Create textures for the buffer
-    GLuint buffer_texture;
-    glGenTextures(1, &buffer_texture);
-    glBindTexture(GL_TEXTURE_2D, buffer_texture);
+    GLuint bufferTexture;
+    glGenTextures(1, &bufferTexture);
+    glBindTexture(GL_TEXTURE_2D, bufferTexture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, buffer.width, buffer.height, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, cast(char *)buffer.data);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -285,8 +285,8 @@ class Game
             continue;
 
           const auto animation = &alienAnim;
-          size_t current_frame = animation.time / animation.frameDuration;
-          const auto alien_sprite = &animation.frames[current_frame];
+          size_t currentFrame = animation.time / animation.frameDuration;
+          const auto alien_sprite = &animation.frames[currentFrame];
           bool overlap = overlapCheck(
             bulletSprite, gameState.bullets[bi].x, gameState.bullets[bi].y,
             *alien_sprite, alien.x, alien.y
@@ -352,12 +352,12 @@ class Game
 
 extern(C) nothrow
 {
-	void error_callback(int error, const(char)* description)
+	void ErrorCallback(int error, const(char)* description)
 	{
 		throw new Error(format("Error: %s : %s", error, fromStringz(description)));
   }
 
-  void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+  void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
   {
     switch(key)
     {
