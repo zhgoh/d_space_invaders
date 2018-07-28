@@ -352,9 +352,9 @@ class Game
 
 extern(C) nothrow
 {
-	void ErrorCallback(int error, const(char)* description)
-	{
-		throw new Error(format("Error: %s : %s", error, fromStringz(description)));
+  void ErrorCallback(int error, const(char)* description)
+  {
+    throw new Error(format("Error: %s : %s", error, fromStringz(description)));
   }
 
   void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
