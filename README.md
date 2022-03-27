@@ -1,6 +1,6 @@
 Space invaders from scratch
 ===========================
-![alt text](https://raw.githubusercontent.com/zgoh/d_space_invaders/master/screenshots/Space_Invaders.png)
+![alt text](https://gitlab.com/zhgoh/d_space_invaders/-/raw/master/screenshots/Space_Invaders.png)
 
 Simple space invaders game written in D, adapted from <http://nicktasios.nl/posts/space-invaders-from-scratch-part-1.html>. 
 I came across that blog post and decided to write the game in D & GLFW.
